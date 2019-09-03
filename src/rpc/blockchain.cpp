@@ -1038,6 +1038,7 @@ UniValue gettxout(const JSONRPCRequest& request)
                         {RPCResult::Type::OBJ, "scriptPubKey", "",
                             {
                                 {RPCResult::Type::STR_HEX, "asm", ""},
+                                {RPCResult::Type::STR, "desc", "Inferred descriptor for the output\n"},
                                 {RPCResult::Type::STR_HEX, "hex", ""},
                                 {RPCResult::Type::NUM, "reqSigs", "Number of required signatures"},
                                 {RPCResult::Type::STR_HEX, "type", "The type, eg pubkeyhash"},

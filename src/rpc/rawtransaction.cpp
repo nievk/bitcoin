@@ -131,6 +131,7 @@ static UniValue getrawtransaction(const JSONRPCRequest& request)
                                      {RPCResult::Type::OBJ, "scriptPubKey", "",
                                      {
                                          {RPCResult::Type::STR, "asm", "the asm"},
+                                         {RPCResult::Type::STR_HEX, "desc", "Inferred descriptor for the output\n"},
                                          {RPCResult::Type::STR, "hex", "the hex"},
                                          {RPCResult::Type::NUM, "reqSigs", "The required sigs"},
                                          {RPCResult::Type::STR, "type", "The type, eg 'pubkeyhash'"},
@@ -482,6 +483,7 @@ static UniValue decoderawtransaction(const JSONRPCRequest& request)
                                 {RPCResult::Type::OBJ, "scriptPubKey", "",
                                 {
                                     {RPCResult::Type::STR, "asm", "the asm"},
+                                    {RPCResult::Type::STR_HEX, "desc", "Inferred descriptor for the output\n"},
                                     {RPCResult::Type::STR_HEX, "hex", "the hex"},
                                     {RPCResult::Type::NUM, "reqSigs", "The required sigs"},
                                     {RPCResult::Type::STR, "type", "The type, eg 'pubkeyhash'"},
@@ -555,6 +557,7 @@ static UniValue decodescript(const JSONRPCRequest& request)
                             {
                                 {RPCResult::Type::STR, "address", "segwit address"},
                             }},
+                            {RPCResult::Type::STR, "desc", "Inferred descriptor for the output\n"},
                             {RPCResult::Type::STR, "p2sh-segwit", "address of the P2SH script wrapping this witness redeem script"},
                         }},
                     }
