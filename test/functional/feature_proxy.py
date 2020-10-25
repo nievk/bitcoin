@@ -26,8 +26,6 @@ addnode connect to IPv4
 addnode connect to IPv6
 addnode connect to onion
 addnode connect to generic DNS name
-
-- Test getnetworkinfo for each node
 """
 
 import socket
@@ -43,8 +41,7 @@ from test_framework.util import (
 from test_framework.netutil import test_ipv6_local
 
 RANGE_BEGIN = PORT_MIN + 2 * PORT_RANGE  # Start after p2p and rpc ports
-
-# Networks returned by RPC getpeerinfo, defined in src/netbase.cpp::GetNetworkName()
+# From GetNetworkName() in netbase.cpp:
 NET_UNROUTABLE = "unroutable"
 NET_IPV4 = "ipv4"
 NET_IPV6 = "ipv6"
@@ -90,14 +87,14 @@ class ProxyTest(BitcoinTestFramework):
             self.serv3 = Socks5Server(self.conf3)
             self.serv3.start()
 
-        # Note: proxies are not used to connect to local nodes. This is because the proxy to
-        # use is based on CService.GetNetwork(), which returns NET_UNROUTABLE for localhost.
+        # Note: proxies are not used to connect to local nodes
+        # this is because the proxy to use is based on CService.GetNetwork(), which return NET_UNROUTABLE for localhost
         args = [
             ['-listen', '-proxy=%s:%i' % (self.conf1.addr),'-proxyrandomize=1'],
             ['-listen', '-proxy=%s:%i' % (self.conf1.addr),'-onion=%s:%i' % (self.conf2.addr),'-proxyrandomize=0'],
             ['-listen', '-proxy=%s:%i' % (self.conf2.addr),'-proxyrandomize=1'],
             []
-        ]
+            ]
         if self.have_ipv6:
             args[3] = ['-listen', '-proxy=[%s]:%i' % (self.conf3.addr),'-proxyrandomize=0', '-noonion']
         self.add_nodes(self.num_nodes, extra_args=args)
@@ -195,7 +192,7 @@ class ProxyTest(BitcoinTestFramework):
                 r[x['name']] = x
             return r
 
-        self.log.info("Test RPC getnetworkinfo")
+        # test RPC getnetworkinfo
         n0 = networks_dict(self.nodes[0].getnetworkinfo())
         assert_equal(NETWORKS, n0.keys())
         for net in NETWORKS:
