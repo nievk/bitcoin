@@ -63,6 +63,14 @@ task:
     FILE_ENV: "./ci/test/00_setup_env_arm.sh"
 
 task:
+  name: 'Win32  [GOAL: deploy]  [unit tests, no gui, no boost::process, no functional tests]'
+  << : *GLOBAL_TASK_TEMPLATE
+  container:
+    image: ubuntu:bionic
+  env:
+    FILE_ENV: "./ci/test/00_setup_env_win32.sh"
+
+task:
   name: 'Win64  [GOAL: deploy]  [unit tests, no gui, no boost::process, no functional tests]'
   << : *GLOBAL_TASK_TEMPLATE
   container:
