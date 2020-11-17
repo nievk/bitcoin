@@ -355,7 +355,12 @@ if TARGET_DARWIN
 	$(AM_V_at) $(PYTHON) $(top_srcdir)/contrib/devtools/test-security-check.py TestSecurityChecks.test_MACHO
 endif
 if TARGET_WINDOWS
+  ifeq ($(WINDOWS_BITS),32)
+	$(AM_V_at) $(PYTHON) $(top_srcdir)/contrib/devtools/test-security-check.py TestSecurityChecks.test_32bit_PE
+  endif
+  ifeq ($(WINDOWS_BITS),64)
 	$(AM_V_at) $(PYTHON) $(top_srcdir)/contrib/devtools/test-security-check.py TestSecurityChecks.test_PE
+  endif
 endif
 if TARGET_LINUX
 	$(AM_V_at) $(PYTHON) $(top_srcdir)/contrib/devtools/test-security-check.py TestSecurityChecks.test_ELF
