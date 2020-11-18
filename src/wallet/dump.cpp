@@ -10,6 +10,11 @@ uint32_t DUMP_VERSION = 1;
 
 bool DumpWallet(std::shared_ptr<CWallet> wallet, bilingual_str& error)
 {
+    if (wallet->GetDatabase().Format() == "bdb") {
+        error = _("This wallet is BDB-backed, which is not supported yet.");
+        return false;
+    }
+
     // Get the dumpfile
     std::string dump_filename = gArgs.GetArg("-dumpfile", "");
     if (dump_filename.empty()) {
@@ -166,7 +171,9 @@ bool CreateFromDump(const std::string& name, const fs::path& wallet_path, biling
         return false;
     }
     DatabaseFormat data_format;
-    if (file_format == "bdb") {
+    if (file_format == "bdb" || format_value == "bdb") {
+        error = _("BDB format is not supported yet.");
+        return false;
         data_format = DatabaseFormat::BERKELEY;
     } else if (file_format == "sqlite") {
         data_format = DatabaseFormat::SQLITE;
