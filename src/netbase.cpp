@@ -59,6 +59,8 @@ std::string GetNetworkName(enum Network net) {
     case NET_IPV6: return "ipv6";
     case NET_ONION: return "onion";
     case NET_I2P: return "i2p";
+    case NET_UNROUTABLE: return "unroutable";
+    case NET_INTERNAL: return "internal";
     default: return "";
     }
 }

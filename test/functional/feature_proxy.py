@@ -42,11 +42,14 @@ from test_framework.netutil import test_ipv6_local
 
 RANGE_BEGIN = PORT_MIN + 2 * PORT_RANGE  # Start after p2p and rpc ports
 # From GetNetworkName() in netbase.cpp:
-NET_UNROUTABLE = ""
+NET_UNROUTABLE = "unroutable"
 NET_IPV4 = "ipv4"
 NET_IPV6 = "ipv6"
 NET_ONION = "onion"
 NET_I2P = "i2p"
+
+# Networks returned by RPC getnetworkinfo, defined in src/rpc/net.cpp::GetNetworksInfo()
+NETWORKS = frozenset({NET_IPV4, NET_IPV6, NET_ONION, NET_I2P})
 
 
 class ProxyTest(BitcoinTestFramework):
@@ -212,13 +215,15 @@ class ProxyTest(BitcoinTestFramework):
 
         # test RPC getnetworkinfo
         n0 = networks_dict(self.nodes[0].getnetworkinfo())
-        for net in ['ipv4','ipv6','onion']:
+        assert_equal(NETWORKS, n0.keys())
+        for net in NETWORKS - {NET_I2P}:
             assert_equal(n0[net]['proxy'], '%s:%i' % (self.conf1.addr))
             assert_equal(n0[net]['proxy_randomize_credentials'], True)
         assert_equal(n0['onion']['reachable'], True)
 
         n1 = networks_dict(self.nodes[1].getnetworkinfo())
-        for net in ['ipv4','ipv6']:
+        assert_equal(NETWORKS, n1.keys())
+        for net in ['ipv4', 'ipv6']:
             assert_equal(n1[net]['proxy'], '%s:%i' % (self.conf1.addr))
             assert_equal(n1[net]['proxy_randomize_credentials'], False)
         assert_equal(n1['onion']['proxy'], '%s:%i' % (self.conf2.addr))
@@ -226,14 +231,16 @@ class ProxyTest(BitcoinTestFramework):
         assert_equal(n1['onion']['reachable'], True)
 
         n2 = networks_dict(self.nodes[2].getnetworkinfo())
-        for net in ['ipv4','ipv6','onion']:
+        assert_equal(NETWORKS, n2.keys())
+        for net in NETWORKS - {NET_I2P}:
             assert_equal(n2[net]['proxy'], '%s:%i' % (self.conf2.addr))
             assert_equal(n2[net]['proxy_randomize_credentials'], True)
         assert_equal(n2['onion']['reachable'], True)
 
         if self.have_ipv6:
             n3 = networks_dict(self.nodes[3].getnetworkinfo())
-            for net in ['ipv4','ipv6']:
+            assert_equal(NETWORKS, n3.keys())
+            for net in NETWORKS - {NET_I2P}:
                 assert_equal(n3[net]['proxy'], '[%s]:%i' % (self.conf3.addr))
                 assert_equal(n3[net]['proxy_randomize_credentials'], False)
             assert_equal(n3['onion']['reachable'], False)
