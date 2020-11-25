@@ -762,10 +762,10 @@
                 <item>
                  <widget class="QLabel" name="label_24">
                   <property name="accessibleName">
-                   <string>Recieved</string>
+                   <string>Received</string>
                   </property>
                   <property name="accessibleDescription">
-                   <string>Recieved</string>
+                   <string>Received</string>
                   </property>
                   <property name="text">
                    <string>Received</string>
@@ -781,7 +781,7 @@
                    </size>
                   </property>
                   <property name="accessibleName">
-                   <string>Bytes Recieved</string>
+                   <string>Bytes Received</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
