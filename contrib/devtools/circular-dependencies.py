@@ -19,6 +19,7 @@ HEADER_MODULE_PATHS = [
 ]
 
 def module_name(path):
+    return path
     if path in MAPPING:
         path = MAPPING[path]
     if any(path.startswith(dirpath) for dirpath in HEADER_MODULE_PATHS):

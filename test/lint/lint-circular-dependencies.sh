@@ -22,6 +22,7 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "wallet/wallet -> wallet/walletdb -> wallet/wallet"
     "policy/fees -> txmempool -> validation -> policy/fees"
 )
+EXPECTED_CIRCULAR_DEPENDENCIES=()
 
 EXIT_CODE=0
 
