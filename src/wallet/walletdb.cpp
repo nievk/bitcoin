@@ -998,6 +998,28 @@ bool WalletBatch::TxnAbort()
     return m_batch->TxnAbort();
 }
 
+#ifndef USE_SQLITE
+// Minified copy of function in wallet/sqlite.cpp w/o error logging
+bool ExistsSQLiteDatabase(const fs::path& dirpath)
+{
+    const fs::path path = dirpath / "wallet.dat";
+    if (fs::symlink_status(path).type() != fs::regular_file) return false;
+    boost::system::error_code ec;
+    auto size = fs::file_size(path, ec);
+    if (size < 512) return false;
+    char magic[16], app_id[4];
+    fsbridge::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) return false;
+    file.read(magic, 16);
+    file.seekg(68, std::ios::beg);
+    file.read(app_id, 4);
+    file.close();
+    std::string magic_str(magic, 16);
+    if (magic_str != std::string("SQLite format 3", 16)) return false;
+    return memcmp(Params().MessageStart(), app_id, 4) == 0;
+}
+#endif
+
 std::unique_ptr<WalletDatabase> MakeDatabase(const fs::path& path, const DatabaseOptions& options, DatabaseStatus& status, bilingual_str& error)
 {
     bool exists;
@@ -1014,7 +1036,6 @@ std::unique_ptr<WalletDatabase> MakeDatabase(const fs::path& path, const Databas
         if (ExistsBerkeleyDatabase(path)) {
             format = DatabaseFormat::BERKELEY;
         }
-#ifdef USE_SQLITE
         if (ExistsSQLiteDatabase(path)) {
             if (format) {
                 error = Untranslated(strprintf("Failed to load database path '%s'. Data is in ambiguous format.", path.string()));
@@ -1023,7 +1044,6 @@ std::unique_ptr<WalletDatabase> MakeDatabase(const fs::path& path, const Databas
             }
             format = DatabaseFormat::SQLITE;
         }
-#endif
     } else if (options.require_existing) {
         error = Untranslated(strprintf("Failed to load database path '%s'. Path does not exist.", path.string()));
         status = DatabaseStatus::FAILED_NOT_FOUND;
@@ -1057,6 +1077,11 @@ std::unique_ptr<WalletDatabase> MakeDatabase(const fs::path& path, const Databas
         return MakeSQLiteDatabase(path, options, status, error);
     }
 #else
+    if (format && format == DatabaseFormat::SQLITE) {
+        error = Untranslated(strprintf("Failed to load database path '%s'. Build does not support SQLite database format.", path.string()));
+        status = DatabaseStatus::FAILED_BAD_FORMAT;
+        return nullptr;
+    }
     assert(format != DatabaseFormat::SQLITE);
 #endif
 
