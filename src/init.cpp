@@ -17,6 +17,7 @@
 #include <chainparams.h>
 #include <compat/sanity.h>
 #include <consensus/validation.h>
+#include <dbwrapper.h>
 #include <fs.h>
 #include <hash.h>
 #include <httprpc.h>
@@ -768,6 +769,10 @@ static void ThreadImport(ChainstateManager& chainman, std::vector<fs::path> vImp
  */
 static bool InitSanityCheck()
 {
+    if (!dbwrapper_SanityCheck()) {
+        return InitError(Untranslated("Database sanity check failure. Aborting."));
+    }
+
     if (!ECC_InitSanityCheck()) {
         return InitError(Untranslated("Elliptic curve cryptography sanity check failure. Aborting."));
     }
