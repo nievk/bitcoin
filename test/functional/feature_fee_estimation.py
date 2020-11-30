@@ -262,6 +262,13 @@ class EstimateFeeTest(BitcoinTestFramework):
         self.log.info("Final estimates after emptying mempools")
         check_estimates(self.nodes[1], self.fees_per_kb)
 
+        self.log.info("Testing that fee estimation is disabled in blocksonly.")
+        self.stop_nodes()
+        self.start_nodes(extra_args=[["-blocksonly"]] * len(self.nodes))
+        for node in self.nodes:
+            res = node.estimatesmartfee(2)
+            assert "errors" in res
+            assert "Insufficient data or no feerate found" in res["errors"]
 
 if __name__ == '__main__':
     EstimateFeeTest().main()

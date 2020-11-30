@@ -1798,11 +1798,15 @@ bool AppInitMain(const util::Ref& context, NodeContext& node, interfaces::BlockA
     }
 
     fs::path est_path = GetDataDir() / FEE_ESTIMATES_FILENAME;
+    // Don't initialize fee estimation with old data if we don't relay transactions,
+    // as they would never be updated.
+    if (g_relay_txes) {
     CAutoFile est_filein(fsbridge::fopen(est_path, "rb"), SER_DISK, CLIENT_VERSION);
     // Allowed to fail as this file IS missing on first startup.
     if (!est_filein.IsNull())
         ::feeEstimator.Read(est_filein);
     fFeeEstimatesInitialized = true;
+    }  // if g_relay_txes
 
     // ********************************************************* Step 8: start indexers
     if (args.GetBoolArg("-txindex", DEFAULT_TXINDEX)) {
