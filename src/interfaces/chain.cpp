@@ -176,6 +176,21 @@ public:
         CBlockIndex* block = ::ChainActive()[height];
         return block && ((block->nStatus & BLOCK_HAVE_DATA) != 0) && block->nTx > 0;
     }
+    bool pruneLockExists(const std::string& lockid) override
+    {
+        LOCK(g_prune_locks_mutex);
+        return PruneLockExists(lockid);
+    }
+    bool setPruneLock(const std::string& lockid, const PruneLockInfo& lockinfo, bool sync) override
+    {
+        LOCK(g_prune_locks_mutex);
+        return SetPruneLock(lockid, lockinfo, sync);
+    }
+    bool deletePruneLock(const std::string& lockid) override
+    {
+        LOCK(g_prune_locks_mutex);
+        return DeletePruneLock(lockid);
+    }
     Optional<int> findFirstBlockWithTimeAndHeight(int64_t time, int height, uint256* hash) override
     {
         LOCK(cs_main);

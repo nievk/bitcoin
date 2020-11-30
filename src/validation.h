@@ -193,6 +193,12 @@ uint64_t CalculateCurrentUsage();
  */
 void UnlinkPrunedFiles(const std::set<int>& setFilesToPrune);
 
+extern Mutex g_prune_locks_mutex;
+extern std::unordered_map<std::string, PruneLockInfo> g_prune_locks GUARDED_BY(g_prune_locks_mutex);
+bool PruneLockExists(const std::string& lockid) SHARED_LOCKS_REQUIRED(g_prune_locks_mutex);
+bool SetPruneLock(const std::string& lockid, const PruneLockInfo&, bool sync=false) EXCLUSIVE_LOCKS_REQUIRED(g_prune_locks_mutex);
+bool DeletePruneLock(const std::string& lockid) EXCLUSIVE_LOCKS_REQUIRED(g_prune_locks_mutex);
+
 /** Prune block files up to a given height */
 void PruneBlockFilesManual(int nManualPruneHeight);
 
