@@ -44,6 +44,8 @@ QT_END_NAMESPACE
 namespace GUIUtil
 {
     // Create human-readable string from date
+    QString dateStr(const QDate &datetime);
+    QString dateStr(qint64 nTime);
     QString dateTimeStr(const QDateTime &datetime);
     QString dateTimeStr(qint64 nTime);
 

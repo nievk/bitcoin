@@ -7,6 +7,7 @@
 #define BITCOIN_WALLET_WALLET_H
 
 #include <amount.h>
+#include <bloom.h>
 #include <interfaces/chain.h>
 #include <interfaces/handler.h>
 #include <outputtype.h>
@@ -651,6 +652,11 @@ private:
     void AddToSpends(const COutPoint& outpoint, const uint256& wtxid) EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
     void AddToSpends(const uint256& wtxid) EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
 
+    size_t m_address_bloom_filter_elems GUARDED_BY(cs_wallet) {0};
+    CBloomFilter m_address_bloom_filter GUARDED_BY(cs_wallet);
+    void AddToAddressBloomFilter(const CWalletTx&) EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
+    void BuildAddressBloomFilter() EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
+
     /**
      * Add a transaction to the wallet, or update it.  pIndex and posInBlock should
      * be set when the transaction was known to be included in a block.  When
@@ -837,6 +843,8 @@ public:
     void UnlockCoin(const COutPoint& output) EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
     void UnlockAllCoins() EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
     void ListLockedCoins(std::vector<COutPoint>& vOutpts) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
+
+    bool FindScriptPubKeyUsed(const std::set<CScript>& keys, const boost::variant<boost::blank, std::function<void(const CWalletTx&)>, std::function<void(const CWalletTx&, uint32_t)>>& callback = boost::blank()) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
 
     /*
      * Rescan abort properties
