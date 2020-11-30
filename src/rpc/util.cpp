@@ -497,6 +497,22 @@ std::vector<std::string> RPCHelpMan::GetArgNames() const
     return ret;
 }
 
+bool RPCHelpMan::CheckArgNames(const std::vector<std::string>& args) const
+{
+    if (args.size() != m_args.size()) return false;
+    for (size_t i = 0; i < args.size(); ++i) {
+        auto& help_arg = m_args[i].m_names;
+        auto& check_arg = args[i];
+        if (help_arg.size() + 2 < check_arg.size()) {
+            if (check_arg[help_arg.size()] != '|' || check_arg[help_arg.size() + 1] != '|') return false;
+        } else if (help_arg.size() != check_arg.size()) {
+            return false;
+        }
+        if (help_arg.compare(0, help_arg.size(), check_arg, 0, help_arg.size())) return false;
+    }
+    return true;
+}
+
 std::string RPCHelpMan::ToString() const
 {
     std::string ret;

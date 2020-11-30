@@ -405,6 +405,7 @@ static inline JSONRPCRequest transformNamedArguments(const JSONRPCRequest& in, c
         boost::algorithm::split(vargNames, argNamePattern, boost::algorithm::is_any_of("|"));
         auto fr = argsIn.end();
         for (const std::string & argName : vargNames) {
+            if (argName.empty()) continue;  // "||" used to separate undocumented/deprecated arg names
             fr = argsIn.find(argName);
             if (fr != argsIn.end()) {
                 break;

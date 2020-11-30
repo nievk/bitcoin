@@ -355,6 +355,7 @@ public:
     }
 
     std::vector<std::string> GetArgNames() const;
+    bool CheckArgNames(const std::vector<std::string>& args) const;
 
     const std::string m_name;
 
