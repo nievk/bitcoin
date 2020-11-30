@@ -8,21 +8,21 @@
 
 #include <clientversion.h>
 #include <config/bitcoin-config.h>
+#include <fs.h>
+#include <hash.h>
 #include <netaddress.h>
 #include <protocol.h>
 #include <random.h>
+#include <streams.h>
 #include <sync.h>
 #include <timedata.h>
 #include <tinyformat.h>
 #include <util/system.h>
 
-#include <fs.h>
-#include <hash.h>
 #include <iostream>
-#include <map>
 #include <set>
 #include <stdint.h>
-#include <streams.h>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -177,6 +177,9 @@ protected:
     mutable RecursiveMutex cs;
 
 private:
+    using MapInfo = std::unordered_map<int, CAddrInfo>;
+    using MapAddr = std::unordered_map<CNetAddr, int, CNetAddrHash>;
+
     //! Serialization versions.
     enum Format : uint8_t {
         V0_HISTORICAL = 0,    //!< historic format, before commit e6b343d88
@@ -203,10 +206,10 @@ private:
     int nIdCount GUARDED_BY(cs);
 
     //! table with information about all nIds
-    std::map<int, CAddrInfo> mapInfo GUARDED_BY(cs);
+    MapInfo mapInfo GUARDED_BY(cs);
 
     //! find an nId based on its network address
-    std::map<CNetAddr, int> mapAddr GUARDED_BY(cs);
+    MapAddr mapAddr GUARDED_BY(cs);
 
     //! randomly-ordered vector of all nIds
     std::vector<int> vRandom GUARDED_BY(cs);
@@ -369,7 +372,7 @@ public:
 
         int nUBuckets = ADDRMAN_NEW_BUCKET_COUNT ^ (1 << 30);
         s << nUBuckets;
-        std::map<int, int> mapUnkIds;
+        std::unordered_map<int, int> mapUnkIds;
         int nIds = 0;
         for (const auto& entry : mapInfo) {
             mapUnkIds[entry.first] = nIds;
@@ -490,7 +493,7 @@ public:
         nTried -= nLost;
 
         // Store positions in the new table buckets to apply later (if possible).
-        std::map<int, int> entryToBucket; // Represents which entry belonged to which bucket when serializing
+        std::unordered_map<int, int> entryToBucket; // Represents which entry belonged to which bucket when serializing
 
         for (int bucket = 0; bucket < nUBuckets; bucket++) {
             int nSize = 0;
@@ -537,15 +540,28 @@ public:
 
         // Prune new entries with refcount 0 (as a result of collisions).
         int nLostUnk = 0;
-        for (std::map<int, CAddrInfo>::const_iterator it = mapInfo.begin(); it != mapInfo.end(); ) {
+#if __cplusplus >= 201402L // C++14 or higher, erasing from unordered_map is guaranteed to preserve the order of not deleted elements
+        for (MapInfo::const_iterator it = mapInfo.begin(); it != mapInfo.end(); ) {
             if (it->second.fInTried == false && it->second.nRefCount == 0) {
-                std::map<int, CAddrInfo>::const_iterator itCopy = it++;
+                auto itCopy = it++;
                 Delete(itCopy->first);
                 nLostUnk++;
             } else {
-                it++;
+                ++it;
             }
         }
+#else // pre C++14, drop this once we switch to C++14 or higher
+        std::vector<MapInfo::const_iterator> to_delete;
+        for (MapInfo::const_iterator it = mapInfo.begin(); it != mapInfo.end(); ++it) {
+            if (it->second.fInTried == false && it->second.nRefCount == 0) {
+                to_delete.push_back(it);
+                nLostUnk++;
+            }
+        }
+        for (auto& it : to_delete) {
+            Delete(it->first);
+        }
+#endif
         if (nLost + nLostUnk > 0) {
             LogPrint(BCLog::ADDRMAN, "addrman lost %i new and %i tried addresses due to collisions\n", nLostUnk, nLost);
         }
