@@ -44,6 +44,21 @@ class TestSecurityChecks(unittest.TestCase):
         self.assertEqual(call_security_check(cc, source, executable, ['-Wl,-znoexecstack','-fstack-protector-all','-Wl,-zrelro','-Wl,-z,now','-pie','-fPIE', '-Wl,-z,separate-code']),
                 (0, ''))
 
+    def test_32bit_PE(self):
+        source = 'test1.c'
+        executable = 'test1.exe'
+        cc = 'i686-w64-mingw32-gcc'
+        write_testcode(source)
+
+        self.assertEqual(call_security_check(cc, source, executable, ['-Wl,--no-nxcompat','-Wl,--no-dynamicbase','-no-pie','-fno-PIE']),
+            (1, executable+': failed DYNAMIC_BASE NX RELOC_SECTION'))
+        self.assertEqual(call_security_check(cc, source, executable, ['-Wl,--nxcompat','-Wl,--no-dynamicbase','-no-pie','-fno-PIE']),
+            (1, executable+': failed DYNAMIC_BASE RELOC_SECTION'))
+        self.assertEqual(call_security_check(cc, source, executable, ['-Wl,--nxcompat','-Wl,--dynamicbase','-no-pie','-fno-PIE']),
+            (1, executable+': failed RELOC_SECTION'))
+        self.assertEqual(call_security_check(cc, source, executable, ['-Wl,--nxcompat','-Wl,--dynamicbase','-pie','-fPIE']),
+            (0, ''))
+
     def test_PE(self):
         source = 'test1.c'
         executable = 'test1.exe'

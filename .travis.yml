@@ -66,6 +66,11 @@ jobs:
         - set -o errexit; source ./ci/lint/06_script.sh
 
     - stage: test
+      name: 'Win32  [GOAL: deploy]  [unit tests, no gui, no boost::process, no functional tests]'
+      env: >-
+        FILE_ENV="./ci/test/00_setup_env_win32.sh"
+
+    - stage: test
       name: 'PowerPC64  [GOAL: install]  [unit tests, functional tests]'
       os: linux
       arch: ppc64le

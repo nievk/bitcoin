@@ -194,14 +194,25 @@ def check_ELF_separate_code(executable):
 
 def get_PE_dll_characteristics(executable) -> int:
     '''Get PE DllCharacteristics bits'''
+    return get_PE_dll_arch_and_characteristics(executable)[1]
+
+def get_PE_dll_arch_and_characteristics(executable):
+    '''
+    Get PE DllCharacteristics bits.
+    Returns a tuple (arch,bits) where arch is 'i386:x86-64' or 'i386'
+    and bits is the DllCharacteristics value.
+    '''
     stdout = run_command([OBJDUMP_CMD, '-x',  executable])
 
+    arch = ''
     bits = 0
     for line in stdout.splitlines():
         tokens = line.split()
+        if len(tokens) >= 2 and tokens[0] == 'architecture:':
+            arch = tokens[1].rstrip(',')
         if len(tokens)>=2 and tokens[0] == 'DllCharacteristics':
             bits = int(tokens[1],16)
-    return bits
+    return (arch,bits)
 
 IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020
 IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE    = 0x0040
@@ -212,12 +223,18 @@ def check_PE_DYNAMIC_BASE(executable) -> bool:
     bits = get_PE_dll_characteristics(executable)
     return (bits & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE) == IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
 
+# (64-bit only:)
 # Must support high-entropy 64-bit address space layout randomization
 # in addition to DYNAMIC_BASE to have secure ASLR.
 def check_PE_HIGH_ENTROPY_VA(executable) -> bool:
     '''PIE: DllCharacteristics bit 0x20 signifies high-entropy ASLR'''
-    bits = get_PE_dll_characteristics(executable)
-    return (bits & IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA) == IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA
+    (arch,bits) = get_PE_dll_arch_and_characteristics(executable)
+    if arch == 'i386:x86-64':
+        reqbits = IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA
+    else: # Unnecessary on 32-bit
+        assert(arch == 'i386')
+        reqbits = 0
+    return (bits & reqbits) == reqbits
 
 def check_PE_RELOC_SECTION(executable) -> bool:
     '''Check for a reloc section. This is required for functional ASLR.'''
