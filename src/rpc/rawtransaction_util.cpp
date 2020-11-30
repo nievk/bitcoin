@@ -281,12 +281,13 @@ void SignTransaction(CMutableTransaction& mtx, const SigningProvider* keystore, 
 
     // Script verification errors
     std::map<int, std::string> input_errors;
+    Optional<CAmount> inputs_amount_sum;
 
-    bool complete = SignTransaction(mtx, keystore, coins, nHashType, input_errors);
-    SignTransactionResultToJSON(mtx, complete, coins, input_errors, result);
+    bool complete = SignTransaction(mtx, keystore, coins, nHashType, input_errors, &inputs_amount_sum);
+    SignTransactionResultToJSON(mtx, complete, coins, input_errors, result, inputs_amount_sum);
 }
 
-void SignTransactionResultToJSON(CMutableTransaction& mtx, bool complete, const std::map<COutPoint, Coin>& coins, std::map<int, std::string>& input_errors, UniValue& result)
+void SignTransactionResultToJSON(CMutableTransaction& mtx, bool complete, const std::map<COutPoint, Coin>& coins, std::map<int, std::string>& input_errors, UniValue& result, const Optional<CAmount>& inputs_amount_sum)
 {
     // Make errors UniValue
     UniValue vErrors(UniValue::VARR);
@@ -298,8 +299,21 @@ void SignTransactionResultToJSON(CMutableTransaction& mtx, bool complete, const 
         TxInErrorToJSON(mtx.vin.at(err_pair.first), vErrors, err_pair.second);
     }
 
-    result.pushKV("hex", EncodeHexTx(CTransaction(mtx)));
+    CTransaction tx(mtx);
+    result.pushKV("hex", EncodeHexTx(tx));
     result.pushKV("complete", complete);
+    if (inputs_amount_sum) {
+        CAmount inout_amount = *inputs_amount_sum;
+        for (const CTxOut& txout : mtx.vout) {
+            inout_amount -= txout.nValue;
+        }
+        result.pushKV("fee", ValueFromAmount(inout_amount));
+        result.pushKV("feerate",
+            ValueFromAmount(
+                CFeeRate(inout_amount, GetVirtualTransactionSize(tx)).GetFeePerK()
+            )
+        );
+    }
     if (!vErrors.empty()) {
         if (result.exists("errors")) {
             vErrors.push_backV(result["errors"].getValues());
