@@ -3110,6 +3110,7 @@ void FundTransaction(CWallet* const pwallet, CMutableTransaction& tx, CAmount& f
                 {"subtract_fee_from_outputs", UniValueType(UniValue::VARR)},
                 {"replaceable", UniValueType(UniValue::VBOOL)},
                 {"conf_target", UniValueType(UniValue::VNUM)},
+                {"min_conf", UniValueType(UniValue::VNUM)},
                 {"estimate_mode", UniValueType(UniValue::VSTR)},
             },
             true, true);
@@ -3176,6 +3177,9 @@ void FundTransaction(CWallet* const pwallet, CMutableTransaction& tx, CAmount& f
             coinControl.m_signal_bip125_rbf = options["replaceable"].get_bool();
         }
         SetFeeEstimateMode(*pwallet, coinControl, options["conf_target"], options["estimate_mode"], options["fee_rate"], override_min_fee);
+        if (options.exists("min_conf")) {
+            coinControl.m_min_depth = options["min_conf"].get_int();
+        }
       }
     } else {
         // if options is null and not a bool
@@ -3225,6 +3229,7 @@ static RPCHelpMan fundrawtransaction()
                     {"options", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED_NAMED_ARG, "for backward compatibility: passing in a true instead of an object will result in {\"includeWatching\":true}",
                         {
                             {"add_inputs", RPCArg::Type::BOOL, /* default */ "true", "For a transaction with existing inputs, automatically include more if they are not enough."},
+                            {"min_conf", RPCArg::Type::NUM, /* default */ "0", "The minimum confirmations to filter"},
                             {"changeAddress", RPCArg::Type::STR, /* default */ "pool address", "The bitcoin address to receive the change"},
                             {"changePosition", RPCArg::Type::NUM, /* default */ "random", "The index of the change output"},
                             {"change_type", RPCArg::Type::STR, /* default */ "set by -changetype", "The output type to use. Only valid if changeAddress is not specified. Options are \"legacy\", \"p2sh-segwit\", and \"bech32\"."},
@@ -4390,6 +4395,7 @@ static RPCHelpMan walletcreatefundedpsbt()
                     {"options", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED_NAMED_ARG, "",
                         {
                             {"add_inputs", RPCArg::Type::BOOL, /* default */ "false", "If inputs are specified, automatically include more if they are not enough."},
+                            {"min_conf", RPCArg::Type::NUM, /* default */ "0", "The minimum confirmations to filter"},
                             {"changeAddress", RPCArg::Type::STR_HEX, /* default */ "pool address", "The bitcoin address to receive the change"},
                             {"changePosition", RPCArg::Type::NUM, /* default */ "random", "The index of the change output"},
                             {"change_type", RPCArg::Type::STR, /* default */ "set by -changetype", "The output type to use. Only valid if changeAddress is not specified. Options are \"legacy\", \"p2sh-segwit\", and \"bech32\"."},
